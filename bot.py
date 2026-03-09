@@ -1,8 +1,7 @@
 import asyncio
 import logging
 import os
-from datetime import time
-import pytz
+from datetime import time, timezone, timedelta
 
 from telegram import Update
 from telegram.ext import (
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 SEND_HOUR = int(os.environ.get("SEND_HOUR", "9"))   # час отправки (по умолчанию 9:00)
 SEND_MIN  = int(os.environ.get("SEND_MIN",  "0"))   # минута
-TIMEZONE  = os.environ.get("TIMEZONE", "Europe/Moscow")
+UTC_OFFSET = int(os.environ.get("UTC_OFFSET", "3"))  # +3 для Москвы
 
 MESSAGES = [
     "🌅 Доброе утро! Пора открыть дашборд и заняться делом.\n\n🐍 Задача по Python ждёт тебя\n🇬🇧 Новые английские слова готовы\n📰 Свежие новости дня\n\nОткрывай и вперёд — маленький шаг каждый день = большой результат! 💪",
@@ -99,14 +98,14 @@ def main():
     app.add_handler(CommandHandler("now", now))
 
     # Планировщик ежедневной рассылки
-    tz = pytz.timezone(TIMEZONE)
+    tz = timezone(timedelta(hours=UTC_OFFSET))
     app.job_queue.run_daily(
         send_daily,
         time=time(hour=SEND_HOUR, minute=SEND_MIN, tzinfo=tz),
         name="daily_reminder"
     )
 
-    logger.info(f"Бот запущен. Напоминания в {SEND_HOUR:02d}:{SEND_MIN:02d} {TIMEZONE}")
+    logger.info(f"Бот запущен. Напоминания в {SEND_HOUR:02d}:{SEND_MIN:02d} UTC+{UTC_OFFSET}")
     app.run_polling()
 
 if __name__ == "__main__":
