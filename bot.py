@@ -172,4 +172,463 @@ PYTHON_TASKS = [
     {"topic":"Треугольник звёздочек","task":"Выведи треугольник из звёздочек высотой 5.","hint":"Внешний цикл — строки, умножай * на i.","code":'for i in range(1, 6):\n    print("*" * i)'},
     {"topic":"Анаграмма","task":"Напиши функцию которая проверяет, является ли строка анаграммой другой.","hint":"Анаграммы имеют одинаковые буквы. sorted() на обеих строках.","code":'def is_anagram(a, b):\n    return sorted(a.lower()) == sorted(b.lower())\nprint(is_anagram("кот","ток"))\nprint(is_anagram("Python","Java"))'},
     {"topic":"Секунды в ЧММ","task":"Напиши функцию которая переводит секунды в часы, минуты и секунды.","hint":"Используй // для целого деления и % для остатка.","code":'def sec_to_hms(secs):\n    h = secs // 3600\n    m = (secs % 3600) // 60\n    s = secs % 60\n    return f"{h}ч {m}мин {s}с"\nprint(sec_to_hms(3661))'},
-    {"topic":"datetime","task":"Выведи текущую дату и время используя модуль datetime.","hint":"from datetime import datetime; datetime.now()","code":'from datetime 
+    {"topic":"datetime","task":"Выведи текущую дату и время используя модуль datetime.","hint":"from datetime import datetime; datetime.now()","code":'from datetime import datetime\nnow = datetime.now()\nfmt_date = "%d.%m.%Y"\nfmt_time = "%H:%M:%S"\nprint("Дата:", now.strftime(fmt_date))\nprint("Время:", now.strftime(fmt_time))'},
+    {"topic":"random","task":"Напиши программу которая бросает кубик (число от 1 до 6).","hint":"random.randint(a, b) включает оба края.","code":'import random\nresult = random.randint(1, 6)\nprint(f"Выпало: {result}")'},
+    {"topic":"Удаление дубликатов","task":"Удали дубликаты из списка сохранив порядок элементов.","hint":"Используй set() для проверки, добавляй в новый список по порядку.","code":'nums = [1,3,2,1,4,3,5,2]\nseen = set()\nresult = []\nfor n in nums:\n    if n not in seen:\n        seen.add(n)\n        result.append(n)\nprint(result)'},
+    {"topic":"Степень числа","task":"Реализуй функцию power(base, exp) без оператора **.","hint":"Умножай base на себя exp раз в цикле.","code":'def power(base, exp):\n    result = 1\n    for _ in range(exp):\n        result *= base\n    return result\nprint(power(2, 10))'},
+    {"topic":"Инверсия словаря","task":"Инвертируй словарь — поменяй ключи и значения местами.","hint":"{v: k for k, v in d.items()}","code":'d = {"a":1, "b":2, "c":3}\ninverted = {v: k for k, v in d.items()}\nprint(inverted)'},
+    {"topic":"Високосный год","task":"Напиши программу которая определяет является ли год високосным.","hint":"Делится на 4 но не на 100, или делится на 400.","code":'year = int(input("Год: "))\nif (year%4==0 and year%100!=0) or year%400==0:\n    print("Високосный")\nelse:\n    print("Не високосный")'},
+    {"topic":"Стек","task":"Реализуй стек (LIFO) используя список Python.","hint":"append() — положить, pop() — взять с вершины.","code":'stack = []\nstack.append(1)\nstack.append(2)\nstack.append(3)\nprint("Вершина:", stack[-1])\nprint("Взяли:", stack.pop())\nprint("Стек:", stack)'},
+    {"topic":"Наследование","task":"Создай класс Animal и класс Cat который наследует от него.","hint":"class Дочерний(Родительский): — синтаксис наследования.","code":'class Animal:\n    def speak(self):\n        print("...")\nclass Cat(Animal):\n    def speak(self):\n        print("Мяу!")\nc = Cat()\nc.speak()'},
+    {"topic":"Числа Фибоначчи (генератор)","task":"Создай генератор который выдаёт числа Фибоначчи.","hint":"Используй yield вместо return.","code":'def fibonacci():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\ngen = fibonacci()\nfor _ in range(8):\n    print(next(gen), end=" ")'},
+]
+
+ENGLISH_WORDS = [
+    ("achieve","достигать","[əˈtʃiːv]"),("adventure","приключение","[ədˈventʃər]"),
+    ("advice","совет","[ədˈvaɪs]"),("afford","позволять себе","[əˈfɔːrd]"),
+    ("agree","соглашаться","[əˈɡriː]"),("already","уже","[ɔːlˈredi]"),
+    ("although","хотя","[ɔːlˈðoʊ]"),("angry","злой","[ˈæŋɡri]"),
+    ("apologize","извиняться","[əˈpɒlədʒaɪz]"),("appear","появляться","[əˈpɪər]"),
+    ("apply","применять","[əˈplaɪ]"),("appreciate","ценить","[əˈpriːʃieɪt]"),
+    ("approach","подход","[əˈproʊtʃ]"),("argue","спорить","[ˈɑːrɡjuː]"),
+    ("arrange","организовывать","[əˈreɪndʒ]"),("attend","посещать","[əˈtend]"),
+    ("attitude","отношение","[ˈætɪtjuːd]"),("avoid","избегать","[əˈvɔɪd]"),
+    ("aware","осведомлённый","[əˈwer]"),("background","происхождение","[ˈbækɡraʊnd]"),
+    ("behaviour","поведение","[bɪˈheɪvjər]"),("believe","верить","[bɪˈliːv]"),
+    ("benefit","польза","[ˈbenɪfɪt]"),("borrow","брать в долг","[ˈbɒroʊ]"),
+    ("brave","храбрый","[breɪv]"),("bright","яркий/умный","[braɪt]"),
+    ("busy","занятый","[ˈbɪzi]"),("calm","спокойный","[kɑːm]"),
+    ("career","карьера","[kəˈrɪər]"),("careful","осторожный","[ˈkeərfl]"),
+    ("cause","причина","[kɔːz]"),("certain","уверенный","[ˈsɜːrtn]"),
+    ("challenge","испытание","[ˈtʃælɪndʒ]"),("chance","шанс","[tʃæns]"),
+    ("character","характер","[ˈkærəktər]"),("choose","выбирать","[tʃuːz]"),
+    ("citizen","гражданин","[ˈsɪtɪzn]"),("claim","утверждать","[kleɪm]"),
+    ("clear","ясный","[klɪər]"),("clever","умный","[ˈklevər]"),
+    ("comfortable","удобный","[ˈkʌmftəbl]"),("common","общий","[ˈkɒmən]"),
+    ("communicate","общаться","[kəˈmjuːnɪkeɪt]"),("community","сообщество","[kəˈmjuːnɪti]"),
+    ("compare","сравнивать","[kəmˈper]"),("complete","завершать","[kəmˈpliːt]"),
+    ("concentrate","концентрироваться","[ˈkɒnsntreɪt]"),("confident","уверенный","[ˈkɒnfɪdənt]"),
+    ("connect","соединять","[kəˈnekt]"),("consider","рассматривать","[kənˈsɪdər]"),
+    ("continue","продолжать","[kənˈtɪnjuː]"),("control","контролировать","[kənˈtroʊl]"),
+    ("correct","правильный","[kəˈrekt]"),("create","создавать","[kriˈeɪt]"),
+    ("culture","культура","[ˈkʌltʃər]"),("deal","справляться","[diːl]"),
+    ("decide","решать","[dɪˈsaɪd]"),("delay","откладывать","[dɪˈleɪ]"),
+    ("depend","зависеть","[dɪˈpend]"),("describe","описывать","[dɪˈskraɪb]"),
+    ("develop","развивать","[dɪˈveləp]"),("different","разный","[ˈdɪfrənt]"),
+    ("difficult","сложный","[ˈdɪfɪkəlt]"),("discover","открывать","[dɪˈskʌvər]"),
+    ("discuss","обсуждать","[dɪˈskʌs]"),("dream","мечта","[driːm]"),
+    ("earn","зарабатывать","[ɜːrn]"),("education","образование","[ˌedʒuˈkeɪʃn]"),
+    ("effort","усилие","[ˈefərt]"),("embarrassed","смущённый","[ɪmˈbærəst]"),
+    ("emotion","эмоция","[ɪˈmoʊʃn]"),("encourage","поощрять","[ɪnˈkɜːrɪdʒ]"),
+    ("enjoy","наслаждаться","[ɪnˈdʒɔɪ]"),("environment","среда","[ɪnˈvaɪrənmənt]"),
+    ("especially","особенно","[ɪˈspeʃəli]"),("event","событие","[ɪˈvent]"),
+    ("eventually","в конечном счёте","[ɪˈventʃuəli]"),("excited","взволнованный","[ɪkˈsaɪtɪd]"),
+    ("expect","ожидать","[ɪkˈspekt]"),("experience","опыт","[ɪkˈspɪəriəns]"),
+    ("explain","объяснять","[ɪkˈspleɪn]"),("fail","терпеть неудачу","[feɪl]"),
+    ("familiar","знакомый","[fəˈmɪliər]"),("fear","страх","[fɪər]"),
+    ("feel","чувствовать","[fiːl]"),("focus","фокусироваться","[ˈfoʊkəs]"),
+    ("follow","следовать","[ˈfɒloʊ]"),("forget","забывать","[fərˈɡet]"),
+    ("freedom","свобода","[ˈfriːdəm]"),("friendly","дружелюбный","[ˈfrendli]"),
+    ("future","будущее","[ˈfjuːtʃər]"),("generous","щедрый","[ˈdʒenərəs]"),
+    ("glad","рад","[ɡlæd]"),("goal","цель","[ɡoʊl]"),
+    ("grateful","благодарный","[ˈɡreɪtfl]"),("grow","расти","[ɡroʊ]"),
+    ("happen","случаться","[ˈhæpən]"),("happy","счастливый","[ˈhæpi]"),
+    ("hate","ненавидеть","[heɪt]"),("health","здоровье","[helθ]"),
+    ("helpful","полезный","[ˈhelpfl]"),("honest","честный","[ˈɒnɪst]"),
+    ("hope","надеяться","[hoʊp]"),("however","однако","[haʊˈevər]"),
+    ("huge","огромный","[hjuːdʒ]"),("imagine","воображать","[ɪˈmædʒɪn]"),
+    ("improve","улучшать","[ɪmˈpruːv]"),("include","включать","[ɪnˈkluːd]"),
+    ("increase","увеличивать","[ɪnˈkriːs]"),("influence","влияние","[ˈɪnfluəns]"),
+    ("instead","вместо","[ɪnˈsted]"),("interested","заинтересованный","[ˈɪntrəstɪd]"),
+    ("introduce","представлять","[ˌɪntrəˈdjuːs]"),("invite","приглашать","[ɪnˈvaɪt]"),
+    ("join","присоединяться","[dʒɔɪn]"),("journey","путешествие","[ˈdʒɜːrni]"),
+    ("keep","хранить","[kiːp]"),("kind","добрый","[kaɪnd]"),
+    ("knowledge","знание","[ˈnɒlɪdʒ]"),("language","язык","[ˈlæŋɡwɪdʒ]"),
+    ("lazy","ленивый","[ˈleɪzi]"),("learn","учиться","[lɜːrn]"),
+    ("likely","вероятный","[ˈlaɪkli]"),("limit","предел","[ˈlɪmɪt]"),
+    ("lonely","одинокий","[ˈloʊnli]"),("lose","проигрывать","[luːz]"),
+    ("luck","удача","[lʌk]"),("manage","справляться","[ˈmænɪdʒ]"),
+    ("mean","означать","[miːn]"),("mention","упоминать","[ˈmenʃn]"),
+    ("mind","ум","[maɪnd]"),("miss","скучать","[mɪs]"),
+    ("mistake","ошибка","[mɪˈsteɪk]"),("moment","момент","[ˈmoʊmənt]"),
+    ("mood","настроение","[muːd]"),("natural","естественный","[ˈnætʃrəl]"),
+    ("necessary","необходимый","[ˈnesəseri]"),("nervous","нервный","[ˈnɜːrvəs]"),
+    ("notice","замечать","[ˈnoʊtɪs]"),("offer","предлагать","[ˈɒfər]"),
+    ("opinion","мнение","[əˈpɪniən]"),("opportunity","возможность","[ˌɒpərˈtjuːnɪti]"),
+    ("own","владеть","[oʊn]"),("patient","терпеливый","[ˈpeɪʃnt]"),
+    ("perfect","идеальный","[ˈpɜːrfɪkt]"),("plan","планировать","[plæn]"),
+    ("polite","вежливый","[pəˈlaɪt]"),("popular","популярный","[ˈpɒpjələr]"),
+    ("possible","возможный","[ˈpɒsɪbl]"),("practice","практика","[ˈpræktɪs]"),
+    ("prefer","предпочитать","[prɪˈfɜːr]"),("prepare","готовиться","[prɪˈper]"),
+    ("prevent","предотвращать","[prɪˈvent]"),("probably","вероятно","[ˈprɒbəbli]"),
+    ("progress","прогресс","[ˈproʊɡres]"),("promise","обещать","[ˈprɒmɪs]"),
+    ("proud","гордый","[praʊd]"),("provide","обеспечивать","[prəˈvaɪd]"),
+    ("reach","достигать","[riːtʃ]"),("realise","осознавать","[ˈrɪəlaɪz]"),
+    ("recommend","рекомендовать","[ˌrekəˈmend]"),("reduce","уменьшать","[rɪˈdjuːs]"),
+    ("refuse","отказывать","[rɪˈfjuːz]"),("relationship","отношения","[rɪˈleɪʃnʃɪp]"),
+    ("remember","помнить","[rɪˈmembər]"),("repeat","повторять","[rɪˈpiːt]"),
+    ("require","требовать","[rɪˈkwaɪər]"),("research","исследование","[rɪˈsɜːrtʃ]"),
+    ("respect","уважение","[rɪˈspekt]"),("result","результат","[rɪˈzʌlt]"),
+    ("reward","награда","[rɪˈwɔːrd]"),("risk","риск","[rɪsk]"),
+    ("role","роль","[roʊl]"),("safe","безопасный","[seɪf]"),
+    ("save","экономить","[seɪv]"),("scared","напуганный","[skerd]"),
+    ("serious","серьёзный","[ˈsɪəriəs]"),("share","делиться","[ʃer]"),
+    ("similar","похожий","[ˈsɪmɪlər]"),("skill","навык","[skɪl]"),
+    ("solve","решать","[sɒlv]"),("spend","тратить","[spend]"),
+    ("strange","странный","[streɪndʒ]"),("strong","сильный","[strɒŋ]"),
+    ("succeed","добиваться успеха","[səkˈsiːd]"),("suggest","предлагать","[səˈdʒest]"),
+    ("support","поддерживать","[səˈpɔːrt]"),("surprised","удивлённый","[səˈpraɪzd]"),
+    ("technology","технология","[tekˈnɒlədʒi]"),("thankful","благодарный","[ˈθæŋkfl]"),
+    ("therefore","следовательно","[ˈðerəfɔːr]"),("tired","усталый","[ˈtaɪərd]"),
+    ("together","вместе","[təˈɡeðər]"),("trouble","проблема","[ˈtrʌbl]"),
+    ("trust","доверять","[trʌst]"),("typical","типичный","[ˈtɪpɪkl]"),
+    ("understand","понимать","[ˌʌndərˈstænd]"),("upset","расстроенный","[ʌpˈset]"),
+    ("useful","полезный","[ˈjuːsfl]"),("waste","тратить впустую","[weɪst]"),
+    ("weak","слабый","[wiːk]"),("willing","готовый","[ˈwɪlɪŋ]"),
+    ("wish","желать","[wɪʃ]"),("wonder","удивляться","[ˈwʌndər]"),
+    ("worry","беспокоиться","[ˈwʌri]"),("worth","ценный","[wɜːrθ]"),
+]
+
+MOTIVATIONS = [
+    "Каждый день практики — это шаг к мастерству. Ты уже лучше, чем вчера! 💪",
+    "Python и английский открывают двери по всему миру. Продолжай! 🌍",
+    "Маленькие шаги каждый день = большой результат через год. Вперёд! 🚀",
+    "Ты инвестируешь в себя — это лучшее вложение в жизни! ⭐",
+    "Сегодняшняя практика — это завтрашний навык. Не пропускай! 🎯",
+    "Каждая задача по Python делает тебя ближе к цели. Так держать! 🐍",
+    "Учить язык — значит открывать новый мир. Сегодня ещё 6 слов! 🇬🇧",
+    "Не останавливайся — ты уже дальше, чем те кто даже не начал! 🏆",
+    "Один час учёбы сегодня = один час ближе к мечте! ✨",
+    "Программисты меняют мир. Ты на правильном пути! 💻",
+    "Английский + Python = международная карьера. Двигайся! 🌐",
+    "Ты не просто учишься — ты строишь своё будущее! 🏗️",
+    "Каждая строчка кода делает тебя сильнее. Пиши код! 🔥",
+    "Знание языков — это суперсила. Развивай её каждый день! 🦸",
+]
+
+def build_message():
+    d = date.today().toordinal()
+    quote = QUOTES[d % len(QUOTES)]
+    fact  = FACTS[d % len(FACTS)]
+    task  = PYTHON_TASKS[d % len(PYTHON_TASKS)]
+    motiv = MOTIVATIONS[d % len(MOTIVATIONS)]
+    words = [ENGLISH_WORDS[(d + i * 37) % len(ENGLISH_WORDS)] for i in range(6)]
+
+    msg  = "☀️ *Доброе утро! Твой план на сегодня:*\n\n"
+    msg += f"✦ *Цитата дня*\n_{quote[0]}_\n— {quote[1]}\n\n"
+    msg += f"💚 *Мотивация*\n{motiv}\n\n"
+    msg += f"💡 *Факт дня*\n{fact}\n\n"
+    msg += f"🐍 *Python — задача дня*\nТема: `{task['topic']}`\n📌 {task['task']}\n💡 {task['hint']}\n```python\n{task['code']}\n```\n\n"
+    msg += "🇬🇧 *English — слова дня*\n"
+    for w in words:
+        msg += f"• *{w[0]}* {w[2]} — {w[1]}\n"
+    msg += "\n✅ Удачи! Команды: /help"
+    return msg
+
+# ─── ФРАЗЫ ────────────────────────────────────────────────────────────────────
+PHRASES = [
+    ("Could you say that again, please?","Не могли бы вы повторить?"),
+    ("I'm not sure I understand.","Я не уверен, что понимаю."),
+    ("What do you mean by that?","Что вы имеете в виду?"),
+    ("Let me think about it.","Дайте мне подумать."),
+    ("That makes sense.","Это имеет смысл."),
+    ("I totally agree with you.","Я полностью с тобой согласен."),
+    ("To be honest with you...","Честно говоря..."),
+    ("As far as I know...","Насколько я знаю..."),
+    ("I'll get back to you on that.","Я вернусь к этому позже."),
+    ("It depends on the situation.","Это зависит от ситуации."),
+    ("Can you give me an example?","Можешь привести пример?"),
+    ("I'm looking forward to it.","Я с нетерпением жду этого."),
+    ("That's a good point.","Хорошее замечание."),
+    ("I couldn't agree more.","Не могу не согласиться."),
+    ("Would you mind helping me?","Не мог бы ты мне помочь?"),
+    ("What are you up to?","Чем ты занимаешься?"),
+    ("How's it going?","Как дела?"),
+    ("Never mind.","Не обращай внимания."),
+    ("I'll take care of it.","Я об этом позабочусь."),
+    ("It slipped my mind.","Это вылетело у меня из головы."),
+    ("I'm in a hurry.","Я спешу."),
+    ("Take your time.","Не торопись."),
+    ("You're welcome.","Пожалуйста / Не за что."),
+    ("My pleasure.","С удовольствием."),
+    ("That's up to you.","Это твоё решение."),
+    ("I'm not in the mood.","Я не в настроении."),
+    ("It's worth trying.","Это стоит попробовать."),
+    ("Let's get started.","Давай начнём."),
+    ("We're almost there.","Мы почти у цели."),
+    ("Keep up the good work.","Продолжай в том же духе."),
+    ("I'll do my best.","Я постараюсь."),
+    ("It's no big deal.","Это не страшно."),
+    ("Better late than never.","Лучше поздно, чем никогда."),
+    ("That's easier said than done.","Легче сказать, чем сделать."),
+    ("I can't believe it!","Не могу поверить!"),
+    ("What a coincidence!","Какое совпадение!"),
+    ("I have no idea.","Я понятия не имею."),
+    ("It's on the tip of my tongue.","Это у меня на кончике языка."),
+    ("I'm running late.","Я опаздываю."),
+    ("Long time no see.","Давно не виделись."),
+    ("I've been meaning to call you.","Я давно хотел тебе позвонить."),
+    ("What's the catch?","В чём подвох?"),
+    ("It's a piece of cake.","Это проще простого."),
+    ("I'm over it.","Я уже пережил это."),
+    ("Let's call it a day.","На сегодня хватит."),
+    ("I'm on my way.","Я уже еду."),
+    ("Just in case.","На всякий случай."),
+    ("Out of the blue.","Ни с того ни с сего."),
+    ("Once in a while.","Время от времени."),
+    ("So far so good.","Пока что всё хорошо."),
+]
+
+# ─── КВИЗ ─────────────────────────────────────────────────────────────────────
+QUIZ_PYTHON = [
+    {"q":"Что выведет: print(type(42))?","a":"<class 'int'>","opts":["<class 'int'>","<class 'num'>","<class 'str'>","integer"]},
+    {"q":"Как создать пустой список в Python?","a":"[]","opts":["[]","{}","()","list{}"]},
+    {"q":"Что делает len('hello')?","a":"5","opts":["5","4","6","hello"]},
+    {"q":"Какой оператор используется для возведения в степень?","a":"**","opts":["**","^","^^","//"]},
+    {"q":"Что выведет: print(10 % 3)?","a":"1","opts":["1","3","0","33"]},
+    {"q":"Как написать комментарий в Python?","a":"# комментарий","opts":["# комментарий","// комментарий","/* комментарий */","-- комментарий"]},
+    {"q":"Что делает метод .upper()?","a":"Переводит в верхний регистр","opts":["Переводит в верхний регистр","Переводит в нижний регистр","Удаляет пробелы","Разбивает строку"]},
+    {"q":"Что выведет: print(bool(0))?","a":"False","opts":["False","True","0","None"]},
+    {"q":"Как получить длину списка lst?","a":"len(lst)","opts":["len(lst)","lst.length()","lst.size()","count(lst)"]},
+    {"q":"Что делает range(5)?","a":"Числа от 0 до 4","opts":["Числа от 0 до 4","Числа от 1 до 5","Числа от 0 до 5","5 случайных чисел"]},
+    {"q":"Что выведет: print(2 ** 8)?","a":"256","opts":["256","16","64","512"]},
+    {"q":"Какой метод добавляет элемент в конец списка?","a":".append()","opts":[".append()",".add()",".push()",".insert()"]},
+    {"q":"Что выведет: print('py' * 3)?","a":"pypypy","opts":["pypypy","py3","py py py","error"]},
+    {"q":"Как проверить тип переменной x?","a":"type(x)","opts":["type(x)","typeof(x)","x.type()","gettype(x)"]},
+    {"q":"Что делает метод .split()?","a":"Разбивает строку на список","opts":["Разбивает строку на список","Соединяет список в строку","Удаляет пробелы","Переворачивает строку"]},
+    {"q":"Что выведет: print(list(range(3)))?","a":"[0, 1, 2]","opts":["[0, 1, 2]","[1, 2, 3]","[0, 1, 2, 3]","range(3)"]},
+    {"q":"Какое ключевое слово используется для функции?","a":"def","opts":["def","func","function","define"]},
+    {"q":"Что делает return в функции?","a":"Возвращает значение","opts":["Возвращает значение","Печатает значение","Останавливает программу","Создаёт переменную"]},
+    {"q":"Что выведет: print(10 // 3)?","a":"3","opts":["3","3.33","1","33"]},
+    {"q":"Как создать словарь в Python?","a":"{'key': 'value'}","opts":["{'key': 'value'}","['key': 'value']","('key': 'value')","<key: value>"]},
+]
+
+QUIZ_ENGLISH = [
+    {"q":"Переведи на английский: 'достигать'","a":"achieve","opts":["achieve","receive","believe","conceive"]},
+    {"q":"Что означает 'grateful'?","a":"благодарный","opts":["благодарный","великий","грустный","серьёзный"]},
+    {"q":"Переведи: 'opportunity'","a":"возможность","opts":["возможность","обязательство","оппозиция","операция"]},
+    {"q":"Что означает 'improve'?","a":"улучшать","opts":["улучшать","доказывать","одобрять","перемещать"]},
+    {"q":"Переведи: 'behaviour'","a":"поведение","opts":["поведение","убеждение","верование","беспокойство"]},
+    {"q":"Что означает 'succeed'?","a":"добиться успеха","opts":["добиться успеха","следовать","предшествовать","нуждаться"]},
+    {"q":"Переведи: 'therefore'","a":"следовательно","opts":["следовательно","поэтому раньше","через","поэтому нет"]},
+    {"q":"Что означает 'recommend'?","a":"рекомендовать","opts":["рекомендовать","вспоминать","требовать","отказывать"]},
+    {"q":"Переведи: 'challenge'","a":"испытание/вызов","opts":["испытание/вызов","изменение","шанс","характер"]},
+    {"q":"Что означает 'purpose'?","a":"цель/намерение","opts":["цель/намерение","пурпурный","покупка","пауза"]},
+    {"q":"Переведи: 'although'","a":"хотя","opts":["хотя","также","всё же","вместе"]},
+    {"q":"Что означает 'eventually'?","a":"в конечном счёте","opts":["в конечном счёте","эвентуально","всегда","никогда"]},
+    {"q":"Переведи: 'honest'","a":"честный","opts":["честный","быстрый","скромный","вежливый"]},
+    {"q":"Что означает 'reduce'?","a":"уменьшать","opts":["уменьшать","производить","вводить","разрушать"]},
+    {"q":"Переведи: 'patience'","a":"терпение","opts":["терпение","пациент","страсть","нация"]},
+]
+
+# ─── ЧЕЛЛЕНДЖИ ────────────────────────────────────────────────────────────────
+CHALLENGES = [
+    ("🐍 Python-неделя: переменные","Каждый день создавай 5 новых переменных разных типов и выводи их. К концу недели у тебя будет 35 переменных — ты запомнишь все типы данных!"),
+    ("🇬🇧 English-неделя: 7 слов за 7 дней","Каждый день учи 1 новое слово из команды /words. Записывай их. В воскресенье напиши предложение с каждым словом!"),
+    ("🐍 Python-неделя: циклы","Каждый день пиши одну программу с циклом for или while. Простую: вывод чисел, таблица умножения, список фруктов..."),
+    ("🇬🇧 English-неделя: фразы","Каждый день используй команду /phrase и запоминай одну фразу. К воскресенью у тебя будет 7 готовых разговорных фраз!"),
+    ("🐍 Python-неделя: функции","Каждый день пиши одну функцию def. Пусть делает что угодно — считает, проверяет, выводит. Главное — практика!"),
+    ("🇬🇧 English-неделя: переводы","Каждый день переводи 3 предложения с русского на английский. Используй слова из /words. Не ищи в переводчике!"),
+    ("🐍 Python-неделя: мини-проект","Создай калькулятор за неделю: пн — сложение, вт — вычитание, ср — умножение, чт — деление, пт — объедини всё в одну программу!"),
+    ("🎯 Мега-неделя: Python + English","Каждый день: 1 задача /python + 1 команда /words. Двойная прокачка за 7 дней! Отмечай выполнение через /done"),
+]
+
+# ─── СТРИК ────────────────────────────────────────────────────────────────────
+def get_streak_file(cid): return f"streak_{cid}.txt"
+
+def load_streak(cid):
+    f = get_streak_file(cid)
+    if not os.path.exists(f): return 0, None
+    with open(f) as fp:
+        parts = fp.read().strip().split(",")
+        return int(parts[0]), parts[1] if len(parts) > 1 else None
+
+def save_streak(cid, count, last_date):
+    with open(get_streak_file(cid), "w") as f:
+        f.write(f"{count},{last_date}")
+
+def update_streak(cid):
+    today = str(date.today())
+    count, last = load_streak(cid)
+    if last == today:
+        return count, False  # уже отмечено сегодня
+    yesterday = str(date.today() - timedelta(days=1))
+    if last == yesterday:
+        count += 1
+    else:
+        count = 1
+    save_streak(cid, count, today)
+    return count, True
+
+# ─── АКТИВНЫЙ КВИЗ ────────────────────────────────────────────────────────────
+active_quiz = {}  # chat_id -> {"answer": str, "type": str}
+
+# ─── КОМАНДЫ ──────────────────────────────────────────────────────────────────
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    save_user(update.effective_chat.id)
+    await update.message.reply_text(
+        "👋 *Привет! Я твой ежедневный учебный бот.*\n\n"
+        "Каждое утро в 09:00 МСК присылаю:\n"
+        "✦ Цитату дня\n💚 Мотивацию\n💡 Интересный факт\n"
+        "🐍 Задачу по Python\n🇬🇧 6 английских слов\n\n"
+        "Напиши /help чтобы увидеть все команды!\n\n"
+        "Удачи в учёбе! 🐍🇬🇧",
+        parse_mode="Markdown"
+    )
+
+async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📌 *Все команды бота:*\n\n"
+        "📚 *Учёба:*\n"
+        "/now — полный урок прямо сейчас\n"
+        "/python — задача по Python\n"
+        "/words — английские слова\n"
+        "/fact — интересный факт\n"
+        "/quote — цитата дня\n"
+        "/phrase — разговорная фраза\n\n"
+        "🎯 *Практика:*\n"
+        "/quiz — квиз по Python или English\n"
+        "/challenge — мини-челлендж на неделю\n\n"
+        "📊 *Прогресс:*\n"
+        "/done — отметить день выполненным\n"
+        "/streak — мой стрик дней подряд\n\n"
+        "⚙️ *Настройки:*\n"
+        "/start — подписаться на рассылку\n"
+        "/stop — отписаться\n"
+        "/help — это меню\n\n"
+        f"📊 *В базе:*\n"
+        f"🐍 {len(PYTHON_TASKS)} задач Python | 🇬🇧 {len(ENGLISH_WORDS)} слов\n"
+        f"✦ {len(QUOTES)} цитат | 💡 {len(FACTS)} фактов\n"
+        f"💬 {len(PHRASES)} фраз | 🧠 {len(QUIZ_PYTHON)+len(QUIZ_ENGLISH)} вопросов квиза",
+        parse_mode="Markdown"
+    )
+
+async def cmd_now(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(build_message(), parse_mode="Markdown")
+
+async def cmd_python(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    task = PYTHON_TASKS[date.today().toordinal() % len(PYTHON_TASKS)]
+    msg  = f"🐍 *Python — задача дня*\n\nТема: `{task['topic']}`\n📌 {task['task']}\n💡 {task['hint']}\n```python\n{task['code']}\n```"
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+async def cmd_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    d = date.today().toordinal()
+    words = [ENGLISH_WORDS[(d + i * 37) % len(ENGLISH_WORDS)] for i in range(6)]
+    msg = "🇬🇧 *English — слова дня*\n\n"
+    for w in words: msg += f"• *{w[0]}* {w[2]} — {w[1]}\n"
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    fact = FACTS[date.today().toordinal() % len(FACTS)]
+    await update.message.reply_text(f"💡 *Факт дня*\n\n{fact}", parse_mode="Markdown")
+
+async def cmd_quote(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = QUOTES[date.today().toordinal() % len(QUOTES)]
+    await update.message.reply_text(f"✦ *Цитата дня*\n\n_{q[0]}_\n— {q[1]}", parse_mode="Markdown")
+
+async def cmd_phrase(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    p = random.choice(PHRASES)
+    await update.message.reply_text(
+        f"💬 *Фраза дня*\n\n🇬🇧 *{p[0]}*\n🇷🇺 _{p[1]}_\n\nЗапомни и используй в разговоре!",
+        parse_mode="Markdown"
+    )
+
+async def cmd_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    cid = update.effective_chat.id
+    all_q = QUIZ_PYTHON + QUIZ_ENGLISH
+    q = random.choice(all_q)
+    active_quiz[cid] = {"answer": q["a"], "opts": q["opts"]}
+    opts_text = "\n".join([f"{i+1}. {o}" for i, o in enumerate(q["opts"])])
+    await update.message.reply_text(
+        f"🧠 *Квиз!*\n\n{q['q']}\n\n{opts_text}\n\nОтветь цифрой: 1, 2, 3 или 4",
+        parse_mode="Markdown"
+    )
+
+async def cmd_challenge(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import random
+    ch = random.choice(CHALLENGES)
+    await update.message.reply_text(
+        f"🎯 *Челлендж недели*\n\n*{ch[0]}*\n\n{ch[1]}\n\nНачинай сегодня! Отмечай выполнение через /done 💪",
+        parse_mode="Markdown"
+    )
+
+async def cmd_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cid = update.effective_chat.id
+    count, is_new = update_streak(cid)
+    if is_new:
+        if count == 1:
+            msg = "🎉 Первый день выполнен! Отличное начало!"
+        elif count < 7:
+            msg = f"🔥 День {count} подряд! Продолжай, не останавливайся!"
+        elif count < 30:
+            msg = f"⭐ *{count} дней подряд!* Ты молодец, это уже привычка!"
+        else:
+            msg = f"🏆 *{count} дней подряд!!!* Ты настоящий чемпион учёбы!"
+    else:
+        msg = f"✅ Сегодня уже отмечено! Твой стрик: 🔥 {count} дней"
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+async def cmd_streak(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cid = update.effective_chat.id
+    count, last = load_streak(cid)
+    today = str(date.today())
+    status = "✅ Сегодня выполнено" if last == today else "⏳ Сегодня ещё не отмечено"
+    if count == 0:
+        msg = "📅 *Твой стрик*\n\nЕщё нет данных. Выполни урок и нажми /done!"
+    else:
+        msg = f"📅 *Твой стрик*\n\n🔥 *{count} дней подряд*\n{status}\n\n"
+        if count >= 30: msg += "🏆 Легенда! Продолжай!"
+        elif count >= 7: msg += "⭐ Отличная привычка формируется!"
+        elif count >= 3: msg += "💪 Хорошее начало!"
+        else: msg += "🌱 Каждый день считается!"
+    await update.message.reply_text(msg, parse_mode="Markdown")
+
+async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    remove_user(update.effective_chat.id)
+    await update.message.reply_text("✅ Напоминания отключены. Напиши /start чтобы включить снова.")
+
+async def handle_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cid = update.effective_chat.id
+    if cid not in active_quiz: return
+    text = update.message.text.strip()
+    q_data = active_quiz[cid]
+    try:
+        idx = int(text) - 1
+        if 0 <= idx < len(q_data["opts"]):
+            chosen = q_data["opts"][idx]
+            if chosen == q_data["answer"]:
+                await update.message.reply_text("✅ *Правильно!* Молодец! 🎉\n\nЕщё вопрос? /quiz", parse_mode="Markdown")
+            else:
+                await update.message.reply_text(f"❌ *Неверно.*\nПравильный ответ: *{q_data['answer']}*\n\nЕщё раз? /quiz", parse_mode="Markdown")
+            del active_quiz[cid]
+    except ValueError:
+        pass
+
+async def send_daily(context: ContextTypes.DEFAULT_TYPE):
+    users = load_users()
+    if not users: return
+    msg = build_message()
+    for cid in users:
+        try: await context.bot.send_message(int(cid), msg, parse_mode="Markdown")
+        except Exception as e: logger.warning(f"Failed {cid}: {e}")
+
+def main():
+    if not BOT_TOKEN: raise ValueError("BOT_TOKEN не задан!")
+    from telegram.ext import MessageHandler, filters
+    app = Application.builder().token(BOT_TOKEN).build()
+    for cmd, fn in [("start",start),("help",cmd_help),("now",cmd_now),
+                    ("python",cmd_python),("words",cmd_words),("fact",cmd_fact),
+                    ("quote",cmd_quote),("phrase",cmd_phrase),("quiz",cmd_quiz),
+                    ("challenge",cmd_challenge),("done",cmd_done),
+                    ("streak",cmd_streak),("stop",cmd_stop)]:
+        app.add_handler(CommandHandler(cmd, fn))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_quiz_answer))
+    tz = timezone(timedelta(hours=UTC_OFFSET))
+    app.job_queue.run_daily(send_daily, time=time(SEND_HOUR, SEND_MIN, tzinfo=tz), name="daily")
+    logger.info(f"Бот запущен. Рассылка в {SEND_HOUR:02d}:{SEND_MIN:02d} UTC+{UTC_OFFSET}")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
