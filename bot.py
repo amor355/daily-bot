@@ -1,211 +1,175 @@
-import asyncio
 import logging
 import os
-import json
-from datetime import time, timezone, timedelta
-from anthropic import AsyncAnthropic
-
+from datetime import time, timezone, timedelta, date
 from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN    = os.environ.get("BOT_TOKEN", "")
-ANTHROPIC_KEY= os.environ.get("ANTHROPIC_API_KEY", "")
-SEND_HOUR    = int(os.environ.get("SEND_HOUR", "9"))
-SEND_MIN     = int(os.environ.get("SEND_MIN",  "0"))
-UTC_OFFSET   = int(os.environ.get("UTC_OFFSET", "3"))
-
+BOT_TOKEN  = os.environ.get("BOT_TOKEN", "")
+SEND_HOUR  = int(os.environ.get("SEND_HOUR", "9"))
+SEND_MIN   = int(os.environ.get("SEND_MIN", "0"))
+UTC_OFFSET = int(os.environ.get("UTC_OFFSET", "3"))
 users_file = "users.txt"
 
 def load_users():
-    if not os.path.exists(users_file):
-        return set()
-    with open(users_file) as f:
-        return set(l.strip() for l in f if l.strip())
+    if not os.path.exists(users_file): return set()
+    with open(users_file) as f: return set(l.strip() for l in f if l.strip())
 
-def save_user(chat_id):
-    users = load_users()
-    users.add(str(chat_id))
-    with open(users_file, "w") as f:
-        f.write("\n".join(users))
+def save_user(cid):
+    u = load_users(); u.add(str(cid))
+    with open(users_file,"w") as f: f.write("\n".join(u))
 
-def remove_user(chat_id):
-    users = load_users()
-    users.discard(str(chat_id))
-    with open(users_file, "w") as f:
-        f.write("\n".join(users))
+def remove_user(cid):
+    u = load_users(); u.discard(str(cid))
+    with open(users_file,"w") as f: f.write("\n".join(u))
 
-async def ask_claude(prompt: str) -> str:
-    try:
-        client = AsyncAnthropic(api_key=ANTHROPIC_KEY)
-        msg = await client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            system="Отвечай только на русском языке. Будь кратким и конкретным.",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return msg.content[0].text
-    except Exception as e:
-        logger.error(f"Claude error: {e}")
-        return ""
+QUOTES = [
+    ("Единственный способ делать великую работу — любить то, что делаешь.","Стив Джобс"),
+    ("Инвестиции в знания всегда дают наибольший доход.","Бенджамин Франклин"),
+    ("Успех — это идти от неудачи к неудаче, не теряя энтузиазма.","Уинстон Черчилль"),
+    ("Не важно, как медленно ты идёшь, главное — не останавливаться.","Конфуций"),
+    ("Будущее принадлежит тем, кто верит в красоту своих мечтаний.","Элеонора Рузвельт"),
+    ("Упасть семь раз — встать восемь.","Японская пословица"),
+    ("Лучшее время посадить дерево было 20 лет назад. Второе лучшее время — сейчас.","Китайская пословица"),
+    ("Если вы думаете, что образование дорого обходится, попробуйте невежество.","Дерек Бок"),
+    ("Никогда не поздно быть тем, кем ты мог бы стать.","Джордж Элиот"),
+    ("Я не терпел поражений. Я просто нашёл 10 000 способов, которые не работают.","Томас Эдисон"),
+    ("Дорогу осилит идущий.","Латинская пословица"),
+    ("Знание — сила.","Фрэнсис Бэкон"),
+    ("Путь в тысячу миль начинается с первого шага.","Лао-цзы"),
+    ("Лучший способ предсказать будущее — создать его.","Питер Друкер"),
+    ("Каждый эксперт когда-то был новичком.","Хелен Хейс"),
+    ("Самое сложное в любом деле — начать.","Марк Твен"),
+    ("Учитесь так, словно вы постоянно ощущаете нехватку знаний.","Конфуций"),
+    ("Каждый день — это новая возможность стать лучше вчерашнего себя.","Уэйн Дайер"),
+    ("Дисциплина — это мост между целями и достижениями.","Джим Рон"),
+    ("Мечты без действий — просто мечты.","Нельсон Мандела"),
+    ("Сила не в том, чтобы никогда не падать, а в том, чтобы всегда подниматься.","Вэнс Хавнер"),
+    ("Успех — это сумма маленьких усилий, повторяемых день за днём.","Роберт Коллиер"),
+    ("Я слышу и забываю. Я вижу и помню. Я делаю и понимаю.","Конфуций"),
+    ("Секрет движения вперёд — это начало.","Марк Твен"),
+    ("Разум — это не сосуд, который нужно наполнить, а огонь, который нужно зажечь.","Плутарх"),
+    ("Программирование — это не наука. Это ремесло.","Линус Торвальдс"),
+    ("Любой дурак может писать код, понятный компьютеру. Хороший программист пишет код, понятный людям.","Мартин Фаулер"),
+    ("Сначала решите задачу. Потом напишите код.","Джон Джонсон"),
+    ("Python — это язык, который делает тебя более продуктивным.","Гвидо ван Россум"),
+    ("Жизнь коротка. Изучай Python!","Народная мудрость программистов"),
+    ("Границы моего языка — это границы моего мира.","Людвиг Витгенштейн"),
+    ("Знать несколько языков — значит иметь несколько ключей от одного замка.","Вольтер"),
+    ("Каждый новый язык — это новая жизнь.","Чешская пословица"),
+    ("Кто хочет — ищет возможности. Кто не хочет — ищет причины.","Сократ"),
+    ("Мотивация вас запускает. Привычка заставляет двигаться дальше.","Джим Рон"),
+    ("Образование — лучший билет в будущее.","Малькольм Икс"),
+    ("Начни там, где ты есть. Используй то, что у тебя есть. Делай что можешь.","Артур Эш"),
+    ("Интеллект — это не то, сколько вы знаете, а то, как вы реагируете на то, чего не знаете.","Нил Деграсс Тайсон"),
+    ("Делай сейчас. Иногда «потом» превращается в «никогда».","Народная мудрость"),
+    ("Каждый мастер когда-то был учеником.","Народная мудрость"),
+    ("Не останавливайся, когда устал. Останавливайся, когда закончил.","Народная мудрость"),
+    ("Талант — это дешевле, чем соль. Важна дисциплина, а не талант.","Стивен Кинг"),
+    ("Образование — это не заполнение ведра, а зажигание огня.","Уильям Батлер Йейтс"),
+    ("Тот, кто учится, но не думает, потерян. Тот, кто думает, но не учится, в большой опасности.","Конфуций"),
+    ("Боль от дисциплины легче боли от сожаления.","Джим Рон"),
+    ("Если у вас есть идея — реализуйте её. Единственный способ доказать, что она работает — это попробовать.","Скотт Кук"),
+    ("Один час работы стоит больше, чем день размышлений.","Альберт Эйнштейн"),
+    ("Не бойтесь неудач — бойтесь не попытаться.","Рой Т. Беннет"),
+    ("Сделай сегодня то, что другие не хотят делать, и завтра ты сможешь то, чего другие не могут.","Джерри Райс"),
+    ("Стремись не к успеху, а к ценностям, которые он несёт.","Альберт Эйнштейн"),
+]
 
-async def ask_claude_json(prompt: str):
-    try:
-        client = AsyncAnthropic(api_key=ANTHROPIC_KEY)
-        msg = await client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            system="Отвечай ТОЛЬКО валидным JSON. Без markdown, без пояснений.",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        text = msg.content[0].text.strip()
-        text = text.replace("```json", "").replace("```", "").strip()
-        return json.loads(text)
-    except Exception as e:
-        logger.error(f"Claude JSON error: {e}")
-        return None
+FACTS = [
+    "🧠 Мозг человека потребляет около 20% всей энергии тела, хотя весит лишь 2% от массы тела.",
+    "🐝 Пчёлы могут узнавать человеческие лица — они используют те же нейронные механизмы, что и мы.",
+    "🌊 Более 80% мирового океана до сих пор не исследовано человеком.",
+    "⚡ Молния достигает температуры около 30 000 Кельвин — в пять раз горячее поверхности Солнца.",
+    "🦑 Осьминоги имеют три сердца и голубую кровь, которая содержит медь вместо железа.",
+    "💻 Первый компьютерный баг был буквальным — в 1947 году в компьютер залетел мотылёк.",
+    "🌙 На Луне следы астронавтов Apollo останутся там миллионы лет — там нет ветра.",
+    "🦠 В теле человека бактерий больше, чем клеток самого тела — примерно 38 триллионов.",
+    "🔭 Свет от самых далёких галактик идёт до нас более 13 миллиардов лет.",
+    "💡 Python назван не в честь змеи, а в честь комедийного шоу Monty Python's Flying Circus.",
+    "🌐 Первый сайт в мире был создан в 1991 году Тимом Бернерсом-Ли и до сих пор работает.",
+    "📱 В смартфоне больше вычислительной мощности, чем в компьютерах NASA во время полёта на Луну.",
+    "🖥️ Первый жёсткий диск IBM 1956 года весил тонну и хранил лишь 5 мегабайт данных.",
+    "🌍 Google обрабатывает более 8.5 миллиарда поисковых запросов каждый день.",
+    "⭐ Количество звёзд во Вселенной примерно равно количеству песчинок на всех пляжах Земли.",
+    "🧬 ДНК человека, если её распутать, достигнет расстояния от Земли до Плутона и обратно.",
+    "🦋 Бабочки чувствуют вкус ногами — вкусовые рецепторы расположены на их лапках.",
+    "🌿 Бамбук — самое быстрорастущее растение: он может вырасти на 91 см за один день.",
+    "⚛️ Атомы состоят из пустоты примерно на 99.9999999% — материя почти полностью пустая.",
+    "🎵 Музыка активирует те же центры мозга, что и еда — это один из немногих видов деятельности.",
+    "🦒 Жирафы спят всего 30 минут в сутки — меньше любого другого млекопитающего.",
+    "💎 Алмазы образуются на глубине 150-200 км под землёй при огромном давлении и температуре.",
+    "🌌 Млечный Путь содержит от 200 до 400 миллиардов звёзд.",
+    "🐌 Улитки могут спать до трёх лет в неблагоприятных условиях.",
+    "🧪 Мёд никогда не портится — в египетских гробницах нашли мёд 3000 лет, который был ещё съедобен.",
+    "🌈 Радуга — это полный круг, но обычно мы видим лишь половину из-за горизонта.",
+    "🌿 Деревья общаются друг с другом через грибковые сети в почве — «Лесной интернет».",
+    "🧠 Нейронных связей в мозге человека больше, чем звёзд в Млечном Пути.",
+    "🎲 Если перетасовать колоду карт, скорее всего такой порядок карт не существовал никогда в истории.",
+    "🌞 Если бы Солнце было размером с дверь, Земля была бы размером с монету.",
+    "🔋 Шимпанзе и люди имеют около 98.7% одинаковой ДНК.",
+    "🌠 Каждую секунду во Вселенной рождается примерно три новые звезды.",
+    "🔮 Квантовые компьютеры используют кубиты, которые могут быть 0 и 1 одновременно.",
+    "🐊 Крокодилы практически не изменились за 200 миллионов лет — они пережили динозавров.",
+    "📡 Сигнал от Вояджера-1 идёт до Земли более 22 часов — он улетел дальше всех объектов.",
+    "🚀 Ракета Сатурн-5 до сих пор остаётся самой мощной ракетой, когда-либо запущенной.",
+    "🌊 Тихий океан больше всей суши Земли вместе взятой.",
+    "🦷 Эмаль зубов — самое твёрдое вещество в человеческом теле, но она не восстанавливается.",
+    "💧 Вода расширяется при замерзании — это почти уникальное свойство среди веществ.",
+    "🦩 Птицы — единственные живые потомки динозавров, технически они и есть динозавры.",
+    "🔑 Пароль «123456» используют более 23 миллионов аккаунтов по всему миру.",
+    "🎮 Видеоигры — индустрия объёмом более $200 млрд, она больше, чем кино и музыка вместе.",
+    "🌍 За последние 50 лет население Земли удвоилось — с 3.7 до 8 миллиардов человек.",
+    "🌺 Ваниль происходит от орхидеи и является второй по стоимости специей после шафрана.",
+    "🧲 Магнитное поле Земли защищает нас от солнечного ветра, без него атмосфера улетела бы.",
+    "🌙 Луна каждый год удаляется от Земли примерно на 3.8 см.",
+    "🌿 В Амазонке протекает больше пресной воды, чем в следующих 7 крупнейших реках вместе.",
+    "💫 Если убрать всё пустое пространство из атомов человеческого тела, он поместится в кубик соли.",
+    "🐙 У осьминога нет жёсткого скелета — он может пролезть через любое отверстие размером с его клюв.",
+    "🌺 Орхидеи — одно из самых древних семейств растений, им около 80 миллионов лет.",
+]
 
-async def build_daily_message() -> str:
-    from datetime import date
-    today = date.today()
-    day = today.day
-
-    topics = ['переменные и типы данных','if / elif / else','цикл for и range()','цикл while',
-              'функции def и return','списки и методы','словари','методы строк',
-              'ввод через input()','логические операторы']
-    topic = topics[day % len(topics)]
-
-    # Запускаем все запросы параллельно
-    quote_task   = ask_claude_json('Цитата от известного человека. JSON: {"text":"цитата","author":"Имя Фамилия"}')
-    motiv_task   = ask_claude('2 предложения мотивации для новичка в Python и английском B1. Вдохновляюще!')
-    fact_task    = ask_claude_json('1 удивительный факт о науке или технологиях (2 предложения). JSON: {"fact":"текст"}')
-    python_task  = ask_claude_json(f'Python задача для новичка тема: "{topic}". JSON: {{"topic":"тема","task":"задание 1-2 предл.","hint":"подсказка","code":"код 3-4 строки"}}')
-    words_task   = ask_claude_json('4 слова английский B1. JSON: [{"en":"word","ru":"перевод","tr":"[транскр]"},...]')
-
-    quote, motiv, fact, python, words = await asyncio.gather(
-        quote_task, motiv_task, fact_task, python_task, words_task
-    )
-
-    msg = f"☀️ *Доброе утро! Твой план на сегодня:*\n\n"
-
-    # Цитата
-    if quote and quote.get("text"):
-        msg += f"✦ *Цитата дня*\n_{quote['text']}_\n— {quote['author']}\n\n"
-
-    # Мотивация
-    if motiv:
-        msg += f"💚 *Мотивация*\n{motiv}\n\n"
-
-    # Факт
-    if fact and fact.get("fact"):
-        msg += f"💡 *Факт дня*\n{fact['fact']}\n\n"
-
-    # Python
-    if python and python.get("topic"):
-        msg += f"🐍 *Python — задача дня*\n"
-        msg += f"Тема: `{python['topic']}`\n"
-        msg += f"📌 {python['task']}\n"
-        msg += f"💡 {python['hint']}\n"
-        msg += f"```python\n{python['code']}\n```\n\n"
-
-    # Английский
-    if words and isinstance(words, list):
-        msg += f"🇬🇧 *English — слова дня*\n"
-        for w in words:
-            msg += f"• *{w.get('en','')}* {w.get('tr','')} — {w.get('ru','')}\n"
-        msg += "\n"
-
-    msg += "✅ Удачи! Отмечай выполненное: /done"
-    return msg
-
-# /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    save_user(update.effective_chat.id)
-    await update.message.reply_text(
-        "👋 Привет! Я буду присылать тебе каждое утро:\n\n"
-        "✦ Цитату дня\n"
-        "💚 Мотивацию\n"
-        "💡 Интересный факт\n"
-        "🐍 Задачу по Python\n"
-        "🇬🇧 Английские слова\n\n"
-        f"⏰ Каждый день в {SEND_HOUR:02d}:{SEND_MIN:02d} МСК\n\n"
-        "📌 Команды:\n"
-        "/now — получить урок прямо сейчас\n"
-        "/stop — отписаться\n\n"
-        "Удачи в учёбе! 🐍🇬🇧",
-        parse_mode="Markdown"
-    )
-
-# /stop
-async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    remove_user(update.effective_chat.id)
-    await update.message.reply_text("✅ Напоминания отключены. /start — включить снова.")
-
-# /now
-async def cmd_now(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Генерирую твой урок дня, подожди немного...")
-    try:
-        msg = await build_daily_message()
-        await update.message.reply_text(msg, parse_mode="Markdown")
-    except Exception as e:
-        logger.error(f"/now error: {e}")
-        await update.message.reply_text("❌ Что-то пошло не так, попробуй ещё раз.")
-
-# /done
-async def cmd_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎉 Молодец! Ещё один день учёбы позади.\n"
-        "🔥 Продолжай в том же духе — маленькие шаги каждый день = большой результат!"
-    )
-
-# Ежедневная рассылка
-async def send_daily(context: ContextTypes.DEFAULT_TYPE):
-    users = load_users()
-    if not users:
-        return
-    logger.info(f"Sending daily to {len(users)} users...")
-    try:
-        msg = await build_daily_message()
-        for chat_id in users:
-            try:
-                await context.bot.send_message(
-                    chat_id=int(chat_id),
-                    text=msg,
-                    parse_mode="Markdown"
-                )
-                logger.info(f"Sent to {chat_id}")
-            except Exception as e:
-                logger.warning(f"Failed {chat_id}: {e}")
-    except Exception as e:
-        logger.error(f"Daily send error: {e}")
-
-def main():
-    if not BOT_TOKEN:
-        raise ValueError("BOT_TOKEN не задан!")
-    if not ANTHROPIC_KEY:
-        raise ValueError("ANTHROPIC_API_KEY не задан!")
-
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("stop",  stop))
-    app.add_handler(CommandHandler("now",   cmd_now))
-    app.add_handler(CommandHandler("done",  cmd_done))
-
-    tz = timezone(timedelta(hours=UTC_OFFSET))
-    app.job_queue.run_daily(
-        send_daily,
-        time=time(hour=SEND_HOUR, minute=SEND_MIN, tzinfo=tz),
-        name="daily"
-    )
-
-    logger.info(f"Бот запущен. Рассылка в {SEND_HOUR:02d}:{SEND_MIN:02d} UTC+{UTC_OFFSET}")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+PYTHON_TASKS = [
+    {"topic":"Переменные","task":"Создай три переменные: имя (строка), возраст (число) и рост (дробное). Выведи их.","hint":"Используй print() и знак = для присвоения.","code":'name = "Алекс"\nage = 20\nheight = 1.75\nprint(name, age, height)'},
+    {"topic":"Типы данных","task":"Создай переменные разных типов и узнай их тип с помощью type().","hint":"Функция type() возвращает тип переменной.","code":'x = 42\ny = "Привет"\nz = 3.14\nprint(type(x), type(y), type(z))'},
+    {"topic":"Ввод данных","task":"Попроси пользователя ввести своё имя и поприветствуй его.","hint":"Используй input() для ввода и print() для вывода.","code":'name = input("Как тебя зовут? ")\nprint("Привет,", name)'},
+    {"topic":"Арифметика","task":"Попроси ввести два числа и выведи их сумму, разность, произведение и частное.","hint":"Преобразуй строку в число с помощью int().","code":'a = int(input("Число 1: "))\nb = int(input("Число 2: "))\nprint(a+b, a-b, a*b, a/b)'},
+    {"topic":"if/else","task":"Попроси ввести число и проверь — оно положительное, отрицательное или ноль.","hint":"Используй if, elif и else.","code":'n = int(input("Введи число: "))\nif n > 0:\n    print("Положительное")\nelif n < 0:\n    print("Отрицательное")\nelse:\n    print("Ноль")'},
+    {"topic":"Цикл for","task":"Выведи числа от 1 до 10 с помощью цикла for.","hint":"Используй range(1, 11) — второй аргумент не включается.","code":'for i in range(1, 11):\n    print(i)'},
+    {"topic":"Таблица умножения","task":"Выведи таблицу умножения для числа 7 (от 7×1 до 7×10).","hint":"Используй range(1, 11) и f-строку.","code":'for i in range(1, 11):\n    print(f"7 × {i} = {7*i}")'},
+    {"topic":"Цикл while","task":"Используй цикл while чтобы вывести числа от 1 до 5.","hint":"Начни с i=1 и увеличивай в каждой итерации.","code":'i = 1\nwhile i <= 5:\n    print(i)\n    i += 1'},
+    {"topic":"Угадай число","task":"Попроси пользователя угадать число 7. Продолжай спрашивать пока не угадает.","hint":"Используй while True и break когда угадал.","code":'while True:\n    n = int(input("Угадай число: "))\n    if n == 7:\n        print("Верно!")\n        break\n    print("Не угадал, попробуй ещё")'},
+    {"topic":"Функции","task":"Напиши функцию greet(name) которая выводит приветствие с именем.","hint":"Используй def для объявления и вызови с аргументом.","code":'def greet(name):\n    print(f"Привет, {name}!")\n\ngreet("Мир")\ngreet("Python")'},
+    {"topic":"Функции return","task":"Напиши функцию square(n) которая возвращает квадрат числа.","hint":"Используй return для возврата значения.","code":'def square(n):\n    return n * n\n\nprint(square(4))\nprint(square(7))'},
+    {"topic":"Чётное/нечётное","task":"Напиши функцию is_even(n) которая возвращает True если число чётное.","hint":"Используй оператор % и сравни с 0.","code":'def is_even(n):\n    return n % 2 == 0\n\nprint(is_even(4))\nprint(is_even(7))'},
+    {"topic":"Списки","task":"Создай список из 5 фруктов и выведи каждый с помощью цикла for.","hint":"Список: [\"яблоко\", \"банан\"]","code":'fruits = ["яблоко","банан","вишня","манго","киви"]\nfor f in fruits:\n    print(f)'},
+    {"topic":"Методы списка","task":"Найди сумму, минимум и максимум списка чисел.","hint":"Используй sum(), min(), max().","code":'nums = [3, 7, 1, 9, 4, 6]\nprint("Сумма:", sum(nums))\nprint("Мин:", min(nums))\nprint("Макс:", max(nums))'},
+    {"topic":"Словари","task":"Создай словарь с информацией о себе: имя, возраст, город. Выведи каждое значение.","hint":"Словарь: {\"ключ\": \"значение\"}","code":'person = {"name":"Алекс","age":20,"city":"Москва"}\nprint(person["name"])\nprint(person["age"])\nprint(person["city"])'},
+    {"topic":"Строки","task":"Попроси ввести строку и выведи её длину, в верхнем и нижнем регистре.","hint":"Используй len(), .upper(), .lower()","code":'s = input("Введи строку: ")\nprint("Длина:", len(s))\nprint("Верхний:", s.upper())\nprint("Нижний:", s.lower())'},
+    {"topic":"f-строки","task":"Попроси имя и возраст, выведи красивое предложение используя f-строку.","hint":"f-строка: f\"Привет, {переменная}!\"","code":'name = input("Имя: ")\nage = int(input("Возраст: "))\nprint(f"Привет! Меня зовут {name}, мне {age} лет.")'},
+    {"topic":"break/continue","task":"Выведи числа от 1 до 10, пропуская чётные числа.","hint":"Используй continue чтобы пропустить итерацию.","code":'for i in range(1, 11):\n    if i % 2 == 0:\n        continue\n    print(i)'},
+    {"topic":"List comprehension","task":"Создай список квадратов чисел от 1 до 10 в одну строку.","hint":"[выражение for x in range(...)]","code":'squares = [x**2 for x in range(1, 11)]\nprint(squares)'},
+    {"topic":"try/except","task":"Попроси ввести число и обработай случай, если введена не цифра.","hint":"Используй try/except ValueError","code":'try:\n    n = int(input("Введи число: "))\n    print("Квадрат:", n**2)\nexcept ValueError:\n    print("Это не число!")'},
+    {"topic":"Файлы","task":"Запиши своё имя в файл и прочитай его обратно.","hint":"open(\"файл\", \"w\") для записи, \"r\" для чтения.","code":'with open("name.txt", "w") as f:\n    f.write("Привет, файл!")\nwith open("name.txt", "r") as f:\n    print(f.read())'},
+    {"topic":"lambda","task":"Создай lambda-функцию для удвоения числа и примени её к списку.","hint":"lambda x: выражение. map() применяет к каждому.","code":'double = lambda x: x * 2\nnums = [1, 2, 3, 4, 5]\nresult = list(map(double, nums))\nprint(result)'},
+    {"topic":"zip","task":"Объедини два списка в пары используя zip().","hint":"zip(список1, список2) создаёт пары.","code":'names = ["Аня", "Боб", "Вася"]\nages = [20, 25, 30]\nfor name, age in zip(names, ages):\n    print(f"{name}: {age} лет")'},
+    {"topic":"enumerate","task":"Выведи список с нумерацией используя enumerate().","hint":"enumerate() возвращает пары (индекс, значение).","code":'fruits = ["яблоко","банан","вишня"]\nfor i, fruit in enumerate(fruits, 1):\n    print(f"{i}. {fruit}")'},
+    {"topic":"Классы","task":"Создай простой класс Dog с именем и методом bark().","hint":"class Имя: def __init__(self, ...): self.attr = value","code":'class Dog:\n    def __init__(self, name):\n        self.name = name\n    def bark(self):\n        print(f"{self.name} говорит: Гав!")\n\nd = Dog("Рекс")\nd.bark()'},
+    {"topic":"Рекурсия","task":"Напиши рекурсивную функцию для вычисления факториала числа.","hint":"factorial(n) = n * factorial(n-1), базовый случай: n==0 → 1","code":'def factorial(n):\n    if n == 0:\n        return 1\n    return n * factorial(n-1)\nprint(factorial(5))'},
+    {"topic":"Множества","task":"Создай два множества и найди их пересечение и объединение.","hint":"& для пересечения, | для объединения.","code":'a = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint("Пересечение:", a & b)\nprint("Объединение:", a | b)'},
+    {"topic":"Числа Фибоначчи","task":"Выведи первые 10 чисел Фибоначчи без рекурсии.","hint":"Храни два предыдущих числа в переменных a и b.","code":'a, b = 0, 1\nfor _ in range(10):\n    print(a, end=" ")\n    a, b = b, a + b'},
+    {"topic":"Счётчик букв","task":"Подсчитай сколько раз каждая буква встречается в строке.","hint":"Создай словарь и увеличивай счётчик для каждой буквы.","code":'text = "banana"\ncounts = {}\nfor c in text:\n    counts[c] = counts.get(c, 0) + 1\nprint(counts)'},
+    {"topic":"Обращение строки","task":"Переверни строку введённую пользователем.","hint":"Срезы с отрицательным шагом: строка[::-1]","code":'s = input("Введи строку: ")\nprint("Обратная:", s[::-1])'},
+    {"topic":"FizzBuzz","task":"Числа 1-20: кратные 3 → Fizz, 5 → Buzz, оба → FizzBuzz.","hint":"Проверяй делимость на 15 первым.","code":'for i in range(1, 21):\n    if i%15==0: print("FizzBuzz")\n    elif i%3==0: print("Fizz")\n    elif i%5==0: print("Buzz")\n    else: print(i)'},
+    {"topic":"НОД Евклида","task":"Напиши функцию для нахождения НОД двух чисел.","hint":"НОД(a, b) = НОД(b, a % b), пока b != 0.","code":'def gcd(a, b):\n    while b:\n        a, b = b, a % b\n    return a\nprint(gcd(48, 18))'},
+    {"topic":"Простые числа","task":"Найди все простые числа до 50 методом решета Эратосфена.","hint":"Начни со списка True, отмечай составные числа как False.","code":'n = 50\nsieve = [True] * (n+1)\nsieve[0] = sieve[1] = False\nfor i in range(2, int(n**0.5)+1):\n    if sieve[i]:\n        for j in range(i*i, n+1, i):\n            sieve[j] = False\nprint([i for i in range(n+1) if sieve[i]])'},
+    {"topic":"Палиндром","task":"Напиши функцию которая проверяет, является ли строка палиндромом.","hint":"Палиндром читается одинаково в обе стороны. Используй [::-1].","code":'def is_palindrome(s):\n    s = s.lower().replace(" ","")\n    return s == s[::-1]\nprint(is_palindrome("рот тор"))\nprint(is_palindrome("Python"))'},
+    {"topic":"Сортировка словарей","task":"Отсортируй список словарей по значению ключа age.","hint":"sorted(список, key=lambda x: x['ключ'])","code":'people = [{"name":"Боб","age":30},{"name":"Аня","age":20}]\nsorted_p = sorted(people, key=lambda x: x["age"])\nfor p in sorted_p:\n    print(p)'},
+    {"topic":"Celsius/Fahrenheit","task":"Напиши функции для перевода Цельсия в Фаренгейт и обратно.","hint":"F = C * 9/5 + 32; C = (F - 32) * 5/9","code":'def to_f(c): return c * 9/5 + 32\ndef to_c(f): return (f - 32) * 5/9\nprint(to_f(100))\nprint(to_c(212))'},
+    {"topic":"*args","task":"Напиши функцию которая принимает любое количество чисел и возвращает их сумму.","hint":"*args позволяет передать любое количество аргументов.","code":'def my_sum(*args):\n    return sum(args)\nprint(my_sum(1, 2, 3))\nprint(my_sum(10, 20, 30, 40))'},
+    {"topic":"Треугольник звёздочек","task":"Выведи треугольник из звёздочек высотой 5.","hint":"Внешний цикл — строки, умножай * на i.","code":'for i in range(1, 6):\n    print("*" * i)'},
+    {"topic":"Анаграмма","task":"Напиши функцию которая проверяет, является ли строка анаграммой другой.","hint":"Анаграммы имеют одинаковые буквы. sorted() на обеих строках.","code":'def is_anagram(a, b):\n    return sorted(a.lower()) == sorted(b.lower())\nprint(is_anagram("кот","ток"))\nprint(is_anagram("Python","Java"))'},
+    {"topic":"Секунды в ЧММ","task":"Напиши функцию которая переводит секунды в часы, минуты и секунды.","hint":"Используй // для целого деления и % для остатка.","code":'def sec_to_hms(secs):\n    h = secs // 3600\n    m = (secs % 3600) // 60\n    s = secs % 60\n    return f"{h}ч {m}мин {s}с"\nprint(sec_to_hms(3661))'},
+    {"topic":"datetime","task":"Выведи текущую дату и время используя модуль datetime.","hint":"from datetime import datetime; datetime.now()","code":'from datetime 
